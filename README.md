@@ -66,6 +66,9 @@ Notes:
 ## Quick start
 See: `docs/quickstart.md`
 
+## OpenClaw integration
+See: `docs/openclaw-integration.md` (one-click patch + restart)
+
 ## Next steps / roadmap
 Short-term (next 1–2 weeks):
 - **Telegram wiring**: `/share <routeId>` to send a route bundle; auto-import bundles when a `.tar.gz` is received.
