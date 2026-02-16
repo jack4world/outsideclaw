@@ -2,11 +2,14 @@
 //
 // Usage:
 //   node guide_route.js <geojsonPath> <lat> <lon> [lastIdx] \
-//     [--alerts <alertsJsonPath>] [--state <stateJsonPath>] [--cooldown-sec <n>] [--radius-m <n>]
+//     [--alerts <alertsJsonPath>] [--state <stateJsonPath>] [--cooldown-sec <n>] [--radius-m <n>] \
+//     [--wx on] [--mode day_hike|summit_camp|trail_run] [--tz Asia/Shanghai] [--wx-hours 6] \
+//     [--wx-cache <cacheJsonPath>] [--wx-cache-sec <n>]
 //
 // Output:
 //   Line 1-2: per references/guide-protocol.md
 //   Optional Line 3: "ALERT <letter>: <message>" when near a key node (if --alerts provided)
+//   Optional WX line: "WX ALERT: <CODE> <brief>" when weather changes sharply (if --wx on)
 //
 // Notes:
 // - No LLM involved.
@@ -54,6 +57,14 @@ const alertsPath = typeof flags["alerts"] === "string" ? flags["alerts"] : null;
 const statePath = typeof flags["state"] === "string" ? flags["state"] : null;
 const cooldownSec = flags["cooldown-sec"] != null ? Number(flags["cooldown-sec"]) : 1800; // 30min
 const radiusOverrideM = flags["radius-m"] != null ? Number(flags["radius-m"]) : null;
+
+// Weather alerts (deterministic, optional)
+const wxOn = flags["wx"] === "on" || flags["wx"] === true;
+const mode = typeof flags["mode"] === "string" ? String(flags["mode"]) : "day_hike";
+const tz = typeof flags["tz"] === "string" ? String(flags["tz"]) : "Asia/Shanghai";
+const wxHours = flags["wx-hours"] != null ? Number(flags["wx-hours"]) : mode === "summit_camp" ? 6 : mode === "trail_run" ? 2 : 3;
+const wxCachePath = typeof flags["wx-cache"] === "string" ? flags["wx-cache"] : null;
+const wxCacheSec = flags["wx-cache-sec"] != null ? Number(flags["wx-cache-sec"]) : 900; // 15min
 
 // Defaults (keep in sync with references/guide-protocol.md)
 const toleranceM = 50;
@@ -275,6 +286,142 @@ function saveState(p, st) {
   }
 }
 
+function loadCache(p) {
+  if (!p) return null;
+  try {
+    return JSON.parse(fs.readFileSync(p, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(p, j) {
+  if (!p) return;
+  try {
+    fs.writeFileSync(p, JSON.stringify(j, null, 2), "utf8");
+  } catch {
+    // ignore
+  }
+}
+
+function maxDelta(arr, windowH, dir) {
+  let best = -Infinity;
+  for (let i = 0; i + windowH < arr.length; i++) {
+    const d = dir === "down" ? arr[i] - arr[i + windowH] : arr[i + windowH] - arr[i];
+    if (d > best) best = d;
+  }
+  return best;
+}
+
+function sumWindow(arr, windowH) {
+  let best = -Infinity;
+  for (let i = 0; i + windowH <= arr.length; i++) {
+    let s = 0;
+    for (let j = i; j < i + windowH; j++) s += arr[j];
+    if (s > best) best = s;
+  }
+  return best;
+}
+
+function wxThresholds(mode) {
+  const m = mode || "day_hike";
+  const map = {
+    day_hike: { windUp_ms_3h: 6, gustUp_ms_3h: 10, visDown_km_2h: 3, visBelow_km_2h: 2, popUp_pct_2h: 30, rainMm_3h: 3, tempDown_c_3h: 4 },
+    summit_camp: { windUp_ms_3h: 5, gustUp_ms_3h: 8, visDown_km_2h: 2, visBelow_km_2h: 2, popUp_pct_2h: 25, rainMm_3h: 2, tempDown_c_3h: 3 },
+    trail_run: { windUp_ms_3h: 7, gustUp_ms_3h: 12, visDown_km_2h: 3, visBelow_km_2h: 2, popUp_pct_2h: 35, rainMm_3h: 3, tempDown_c_3h: 4 },
+  };
+  return map[m] || map.day_hike;
+}
+
+function pickWxSamplePoint(me, alerts, mode) {
+  // Default: me. For summit_camp, prefer ridge node if available.
+  if (mode === "summit_camp" && alerts?.nodes?.length) {
+    const ridge = alerts.nodes.find((n) => n && String(n.kind) === "summit_or_ridge" && n.lat != null && n.lon != null);
+    if (ridge) return { lat: Number(ridge.lat), lon: Number(ridge.lon), why: "ridge" };
+  }
+  return { lat: me.lat, lon: me.lon, why: "me" };
+}
+
+async function weatherAlertLine(lat, lon, mode, tz, hours) {
+  const h = Math.max(2, Math.min(12, Number(hours || 3)));
+  const th = wxThresholds(mode);
+
+  const hourly = [
+    "temperature_2m",
+    "precipitation_probability",
+    "precipitation",
+    "wind_speed_10m",
+    "wind_gusts_10m",
+    "visibility",
+  ];
+
+  const url = new URL("https://api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude", String(lat));
+  url.searchParams.set("longitude", String(lon));
+  url.searchParams.set("timezone", tz);
+  url.searchParams.set("forecast_days", "2");
+  url.searchParams.set("hourly", hourly.join(","));
+
+  const res = await fetch(url.toString());
+  if (!res.ok) return null;
+  const j = await res.json();
+  const H = j?.hourly;
+  if (!H) return null;
+
+  function take(name) {
+    const a = H[name];
+    if (!Array.isArray(a)) return null;
+    return a.slice(0, h + 1).map((x) => Number(x));
+  }
+
+  const wind = take("wind_speed_10m");
+  const gust = take("wind_gusts_10m");
+  const visM = take("visibility");
+  const pop = take("precipitation_probability");
+  const rain = take("precipitation");
+  const temp = take("temperature_2m");
+  if (!wind || !gust || !visM || !pop || !rain || !temp) return null;
+
+  const visKm = visM.map((m) => m / 1000);
+  const cand = [];
+
+  if (wind.length >= 4) {
+    const best = maxDelta(wind, 3, "up");
+    if (best >= th.windUp_ms_3h) cand.push({ prio: 90, line: `WX ALERT: WIND_UP +${Math.round(best)}m/s in 3h` });
+  }
+  if (gust.length >= 4) {
+    const best = maxDelta(gust, 3, "up");
+    if (best >= th.gustUp_ms_3h) cand.push({ prio: 95, line: `WX ALERT: GUST_UP +${Math.round(best)}m/s in 3h` });
+  }
+
+  if (visKm.length >= 3) {
+    const best = maxDelta(visKm, 2, "down");
+    const min2h = Math.min(...visKm.slice(0, 3));
+    if (min2h <= th.visBelow_km_2h) cand.push({ prio: 92, line: `WX ALERT: VIS_DOWN <${th.visBelow_km_2h}km in 2h` });
+    else if (best >= th.visDown_km_2h) cand.push({ prio: 80, line: `WX ALERT: VIS_DOWN -${best.toFixed(0)}km in 2h` });
+  }
+
+  if (pop.length >= 3) {
+    const best = maxDelta(pop, 2, "up");
+    const maxSoon = Math.max(...pop.slice(0, 3));
+    if (best >= th.popUp_pct_2h) cand.push({ prio: 75, line: `WX ALERT: RAIN_UP >${Math.round(maxSoon)}% next 2h` });
+  }
+
+  if (rain.length >= 4) {
+    const best3h = sumWindow(rain, 3);
+    if (best3h >= th.rainMm_3h) cand.push({ prio: 70, line: `WX ALERT: RAIN_MM ${best3h.toFixed(0)}mm in 3h` });
+  }
+
+  if (temp.length >= 4) {
+    const best = maxDelta(temp, 3, "down");
+    if (best >= th.tempDown_c_3h) cand.push({ prio: 60, line: `WX ALERT: TEMP_DOWN -${best.toFixed(0)}C in 3h` });
+  }
+
+  if (!cand.length) return null;
+  cand.sort((a, b) => b.prio - a.prio);
+  return cand[0].line;
+}
+
 function maybeAlert(me, alerts, state) {
   if (!alerts) return null;
   const now = Math.floor(Date.now() / 1000);
@@ -362,3 +509,24 @@ const st = loadState(statePath);
 const al = maybeAlert(me, alerts, st);
 if (al) console.log(al.line);
 saveState(statePath, st);
+
+// Optional WX ALERT line (deterministic)
+if (wxOn) {
+  const sample = pickWxSamplePoint(me, alerts, mode);
+
+  // cache key: lat/lon rounded + mode/tz/hours
+  const key = `${sample.lat.toFixed(5)},${sample.lon.toFixed(5)}|${mode}|${tz}|${Math.round(wxHours)}`;
+  const now = Math.floor(Date.now() / 1000);
+  const cache = loadCache(wxCachePath);
+  if (cache && cache.key === key && Number(cache.at) && now - Number(cache.at) < wxCacheSec) {
+    if (cache.line) console.log(cache.line);
+  } else {
+    try {
+      const line = await weatherAlertLine(sample.lat, sample.lon, mode, tz, wxHours);
+      if (line) console.log(line);
+      saveCache(wxCachePath, { key, at: now, line: line || null, sample });
+    } catch {
+      // ignore weather failures
+    }
+  }
+}
