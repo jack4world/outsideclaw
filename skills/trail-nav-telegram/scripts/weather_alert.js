@@ -75,6 +75,7 @@ const thresholdsByMode = {
 const th = thresholdsByMode[mode] || thresholdsByMode.day_hike;
 
 function maxDelta(arr, windowH, dir) {
+  // dir: 'up' => max(arr[i+w]-arr[i]); 'down' => max(arr[i]-arr[i+w])
   let best = -Infinity;
   let at = null;
   for (let i = 0; i + windowH < arr.length; i++) {
@@ -140,8 +141,10 @@ if (!wind || !gust || !visM || !pop || !rain || !temp) process.exit(0);
 
 const visKm = visM.map((m) => m / 1000);
 
+// compute candidate alerts
 const cand = [];
 
+// wind up in 3h
 if (wind.length >= 4) {
   const { best } = maxDelta(wind, 3, "up");
   if (best >= th.windUp_ms_3h) cand.push({ prio: 90, line: `WX ALERT: WIND_UP +${Math.round(best)}m/s in ${hoursToStr(3)}` });
@@ -151,6 +154,7 @@ if (gust.length >= 4) {
   if (best >= th.gustUp_ms_3h) cand.push({ prio: 95, line: `WX ALERT: GUST_UP +${Math.round(best)}m/s in ${hoursToStr(3)}` });
 }
 
+// visibility down in 2h
 if (visKm.length >= 3) {
   const { best } = maxDelta(visKm, 2, "down");
   const min2h = Math.min(...visKm.slice(0, 3));
@@ -158,17 +162,20 @@ if (visKm.length >= 3) {
   else if (best >= th.visDown_km_2h) cand.push({ prio: 80, line: `WX ALERT: VIS_DOWN -${best.toFixed(0)}km in ${hoursToStr(2)}` });
 }
 
+// rain probability up
 if (pop.length >= 3) {
   const { best } = maxDelta(pop, 2, "up");
   const maxSoon = Math.max(...pop.slice(0, 3));
   if (best >= th.popUp_pct_2h) cand.push({ prio: 75, line: `WX ALERT: RAIN_UP >${Math.round(maxSoon)}% next ${hoursToStr(2)}` });
 }
 
+// rain amount window (3h)
 if (rain.length >= 4) {
   const best3h = sumWindow(rain, 3);
   if (best3h >= th.rainMm_3h) cand.push({ prio: 70, line: `WX ALERT: RAIN_MM ${best3h.toFixed(0)}mm in ${hoursToStr(3)}` });
 }
 
+// temp down in 3h
 if (temp.length >= 4) {
   const { best } = maxDelta(temp, 3, "down");
   if (best >= th.tempDown_c_3h) cand.push({ prio: 60, line: `WX ALERT: TEMP_DOWN -${best.toFixed(0)}C in ${hoursToStr(3)}` });

@@ -43,6 +43,7 @@ Preferred alternative (often simplest): ask the user to export/send the **GPX/KM
   - `scripts/scrape_2bulu_tracks.js` list-page scraper → JSON/CSV + screenshot
   - `scripts/parse_2bulu_kml.js` parse KML → stats + geojson + routepack
   - `scripts/render_route_map.js` render route HTML+PNG map for sharing
+  - `scripts/render_route_map_annotated.js` render annotated map (GeoJSON + alerts) to HTML+PNG
   - `scripts/guide_route.js` deterministic off-route guidance from GeoJSON + current location (outputs the 2-line guide protocol)
   - `scripts/weather_alert.js` deterministic weather change alert (Open-Meteo) for day_hike/summit_camp/trail_run modes
 - References:
@@ -50,5 +51,6 @@ Preferred alternative (often simplest): ask the user to export/send the **GPX/KM
   - `references/guide-protocol.md`
   - `references/safety-checklist.md`
   - `references/gear-list-overnight.md`
-  - `references/qiniangshan_alerts.json` risk-based key-node alerts
+  - `references/qiniangshan_alerts.json` risk-based key-node alerts (used for map annotations + alert triggering)
   - `references/route-alerts.md` alerts schema + how to apply to any route
+  - `references/share-bundles.md` share route bundles between outsideclaw agents

@@ -38,7 +38,7 @@ Line 4 (optional weather alert, if enabled and sharp change detected):
 - bboxGuardM=2000 (if far from bbox, return E:OUT_OF_BBOX)
 
 ## Reference implementation
-- `scripts/guide_route.js`: given a GeoJSON LineString + (lat,lon) (+ optional lastIdx), prints the 2-4 line response.
+- `scripts/guide_route.js`: given a GeoJSON LineString + (lat,lon) (+ optional lastIdx), prints the 2-3 line response.
   - Add `--alerts references/<route>_alerts.json` to enable key-node alerts.
   - Add `--state /tmp/guide_state.json --cooldown-sec 1800` to dedupe alerts.
 

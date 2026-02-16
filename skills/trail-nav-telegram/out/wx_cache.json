@@ -1,0 +1,10 @@
+{
+  "key": "22.53115,114.51631|day_hike|Asia/Shanghai|3",
+  "at": 1771251835,
+  "line": "WX ALERT: VIS_DOWN -14km in 2h",
+  "sample": {
+    "lat": 22.531146,
+    "lon": 114.516312,
+    "why": "me"
+  }
+}
