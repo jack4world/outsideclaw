@@ -42,7 +42,9 @@ See: `docs/apple-watch.md`
 4. Initialize DB: `npm run db:init`
 5. Import a KML: `npm run import:kml -- /path/to/route.kml` (also writes `~/.outsideclaw/routes/<routeId>/route.geojson`)
 6. Import a GPX: `npm run import:gpx -- /path/to/route.gpx` (also writes artifacts)
-7. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
+7. Guide locally (by routeId + location):
+   - `npm run guide -- <routeId> <lat> <lon> [lastIdx] --wx on --mode day_hike`
+8. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
 
 ## License
 MIT
