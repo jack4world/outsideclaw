@@ -25,12 +25,19 @@ function openDb(dbPath = resolveDbPath()) {
 }
 
 function migrate(db) {
+  // Fresh installs will create latest schema. For existing DBs, apply lightweight ALTER migrations.
   db.exec(`
     CREATE TABLE IF NOT EXISTS meta (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+  `);
 
+  const cur = db.prepare("SELECT value FROM meta WHERE key='schema_version'").get()?.value;
+  const curVer = cur ? Number(cur) : 0;
+
+  // Base schema (v1)
+  db.exec(`
     CREATE TABLE IF NOT EXISTS routes (
       route_id TEXT PRIMARY KEY,
       name TEXT,
@@ -71,9 +78,55 @@ function migrate(db) {
     );
   `);
 
-  // mark schema version
-  const stmt = db.prepare("INSERT OR REPLACE INTO meta(key,value) VALUES('schema_version', ?)");
-  stmt.run("1");
+  // v2: ensure session planning fields + track_points + risk_events exist
+  // We run these idempotently (ALTERs are wrapped) because schema_version may be out of sync with actual columns.
+  {
+    const alters = [
+      "ALTER TABLE sessions ADD COLUMN people_count INTEGER",
+      "ALTER TABLE sessions ADD COLUMN water_plan_l REAL",
+      "ALTER TABLE sessions ADD COLUMN start_time TEXT",
+      "ALTER TABLE sessions ADD COLUMN hard_cutoff_time TEXT",
+      "ALTER TABLE sessions ADD COLUMN record_on INTEGER DEFAULT 0",
+    ];
+    for (const sql of alters) {
+      try {
+        db.exec(sql + ";");
+      } catch {
+        // ignore (column already exists)
+      }
+    }
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS track_points (
+        session_id TEXT NOT NULL,
+        seq INTEGER NOT NULL,
+        ts TEXT NOT NULL,
+        lat REAL NOT NULL,
+        lon REAL NOT NULL,
+        alt REAL,
+        accuracy_m REAL,
+        PRIMARY KEY(session_id, seq),
+        FOREIGN KEY(session_id) REFERENCES sessions(session_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS risk_events (
+        event_id TEXT PRIMARY KEY,
+        session_id TEXT,
+        ts TEXT NOT NULL,
+        type TEXT NOT NULL,
+        level TEXT,
+        message TEXT,
+        payload_json TEXT,
+        FOREIGN KEY(session_id) REFERENCES sessions(session_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_track_points_ts ON track_points(session_id, ts);
+      CREATE INDEX IF NOT EXISTS idx_risk_events_ts ON risk_events(session_id, ts);
+    `);
+
+    const stmt = db.prepare("INSERT OR REPLACE INTO meta(key,value) VALUES('schema_version', ?)");
+    stmt.run("2");
+  }
 }
 
 module.exports = {
