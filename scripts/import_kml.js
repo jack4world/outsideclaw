@@ -8,6 +8,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { openDb, migrate, resolveDbPath } = require("../src/db");
 const { importKmlFromFile } = require("../src/routes/import_kml");
+const { writeRouteArtifacts } = require("../src/routes/storage");
 
 function parseArgs(argv) {
   const pos = [];
@@ -75,6 +76,17 @@ stmt.run(
   now
 );
 
+const files = writeRouteArtifacts({
+  routeId: rec.routeId,
+  name: rec.name,
+  sourceType: rec.sourceType,
+  source: rec.source,
+  canonicalHashHex: rec.canonicalHashHex,
+  pointsSimplified: rec.pointsSimplified,
+  bbox: rec.bbox,
+  stats: rec.stats,
+});
+
 process.stdout.write(
   JSON.stringify(
     {
@@ -85,6 +97,7 @@ process.stdout.write(
       simplifiedPoints: rec.pointsSimplified.length,
       stats: rec.stats,
       bbox: rec.bbox,
+      artifacts: files,
     },
     null,
     2

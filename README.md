@@ -40,8 +40,8 @@ See: `docs/apple-watch.md`
 2. Configure Telegram channel for your OpenClaw instance
 3. Install the skill(s) in `skills/`
 4. Initialize DB: `npm run db:init`
-5. Import a KML: `npm run import:kml -- /path/to/route.kml`
-6. Import a GPX: `npm run import:gpx -- /path/to/route.gpx`
+5. Import a KML: `npm run import:kml -- /path/to/route.kml` (also writes `~/.outsideclaw/routes/<routeId>/route.geojson`)
+6. Import a GPX: `npm run import:gpx -- /path/to/route.gpx` (also writes artifacts)
 7. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
 
 ## License
