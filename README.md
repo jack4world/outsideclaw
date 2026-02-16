@@ -1,86 +1,41 @@
 # outsideclaw
 
-An outdoor personal assistant built **on top of OpenClaw**.
+户外安全助手（基于 **OpenClaw**）。目标：让 LLM agent 通过结构化数据与确定性计算，帮助人类**减少迷路与恶劣天气等风险**。
 
-Focus: hiking routes (GPX/KML import), Telegram-based interaction, offline-friendly guidance, and safety-first workflows.
+## 徒步爱好者的痛点
+- **容易迷路**：岔路多、夜间/起雾时方向感下降
+- **天气变化快**：山脊风、雾、降温、降雨的突变会放大风险
+- **信号/电量不稳定**：关键时刻没网、App 打不开或耗电太快
+- **信息分散**：路线、装备、风险点、报平安流程难以一体化
 
-## What it does (MVP)
-- Import GPX/KML route files (user-provided)
-- Bind a route to a chat
-- Reply to location messages with **low-token** off-route guidance (2-line fixed schema)
-- Optional: render route map PNG for sharing
+## 核心功能（当前）
+- **导入路线**：GPX/KML → 稳定 `routeId`（内容 hash 去重）
+- **偏航纠正**（低 token）：方向 + 距离 + 建议前进距离（确定性计算，不靠 LLM）
+- **关键节点提醒**：最陡段/山脊高点/下撤开始/终点等风险点提醒（`ALERT`）
+- **天气剧变预警**：风/阵风/能见度/降雨/降温突变（`WX ALERT`，Open‑Meteo，无 key）
+- **路线分享**：可移植 bundle（`.tar.gz`）在 outsideclaw agent 之间互相导入
+- **本地数据库**（SQLite）：session + 轨迹点采集 + 风险事件记录（本地优先）
 
-## Non-goals / constraints (important)
-- Do **not** bypass logins/captchas on external sites.
-- External sites (e.g. 2bulu) are **discovery-only** unless the user manually logs in.
-- Default to user-provided GPX/KML for reliability + privacy.
+## OpenClaw 一键整合（推荐）
+> 你只需要在 OpenClaw 里安装一个 skill，然后跑一条命令。
 
-## Apple Watch (deployment note)
-OpenClaw does not run on watchOS.
-
-Apple Watch is treated as a **sensor + recorder**:
-- Record workout/GPS on Apple Watch
-- Sync to iPhone
-- Export GPX (or share route file) via iPhone, then send to Telegram
-
-outsideclaw (running with OpenClaw) handles:
-- Parsing/RoutePack generation
-- Off-route computations
-- Telegram replies
-
-See: `docs/apple-watch.md`
-
-## Repo layout
-- `skills/` OpenClaw skills used by outsideclaw (starting with `trail-nav-telegram`)
-- `docs/` deployment + usage docs
-- `openclaw/` sample configs
-
-## Deploy / run
-
-### 1) Hikers: use the service
-- See: `docs/for-hikers.md`
-
-### 2) Developers: self-host
-
-#### Local (CLI only)
+### 1) 安装 skill
 ```bash
-git clone https://github.com/jack4world/outsideclaw.git
-cd outsideclaw
-npm run setup
-npm run import:kml -- /path/to/route.kml
-npm run guide -- <routeId> <lat> <lon> --wx on --mode day_hike
+clawhub install trail-nav-telegram
 ```
 
-#### Telegram (via OpenClaw)
-outsideclaw uses OpenClaw as the message gateway / agent runtime.
+### 2) 一键安装 outsideclaw + 自动写入 OpenClaw 配置 + 可选重启
+在你的 OpenClaw 配置文件路径已知的情况下（假设为 `/path/to/openclaw.config.json`）：
+```bash
+# 进入 skill 目录后执行（或按你的 OpenClaw skills 路径找到 scripts/）
+bash scripts/openclaw_oneclick_setup.sh --config /path/to/openclaw.config.json --restart
+```
 
-- One-click integration: `docs/openclaw-integration.md`
-- Quickstart: `docs/quickstart.md`
-
-Notes:
-- We do **not** bypass external site logins/captchas.
-- Data is local-first: DB defaults to `~/.outsideclaw/outsideclaw.sqlite`.
-
-## Next steps / roadmap
-Short-term (next 1–2 weeks):
-- **Telegram wiring**: `/share <routeId>` to send a route bundle; auto-import bundles when a `.tar.gz` is received.
-- **Track logging via Telegram**: when session recording is on, location messages append to `track_points`.
-- **Risk engine**: write more `risk_events` (time cutoff, low-water heuristic, repeated off-route) and expose simple summaries.
-- **Route recommendation v2**: include weather sharp-change signals (WX) and time constraints (startAt/cutoff) into deterministic scoring.
-- **Deployment docs**: improve “how to deploy outsideclaw” (local + OpenClaw+Telegram).
-- **Official website**: publish a GitHub Pages site from `docs/` for promotion.
-
-Mid-term:
-- **Track export**: export a session track to GeoJSON/GPX for backup and sharing.
-- **Apple Watch integration**: start with event-level health signals (fatigue/overload reminders) via iPhone sync; keep privacy-first.
-- **Privacy controls**: explicit `/record on/off` + redaction/masking options for shared bundles.
-
-## Contributing
-Issues and PRs are welcome. Please keep changes:
-- offline-first,
-- deterministic-by-default,
-- low-token in outputs,
-- privacy/safety-first.
+这个一键命令会：
+- 安装/更新 outsideclaw 到 `~/.outsideclaw/app/outsideclaw`
+- 初始化本地 DB 与 routes 目录
+- patch OpenClaw 配置（自动生成 `.bak` 备份）
+- （可选）重启 OpenClaw gateway
 
 ## License
 MIT
