@@ -10,6 +10,8 @@
     "db:info": "node scripts/db_info.js",
     "import:kml": "node scripts/import_kml.js",
     "import:gpx": "node scripts/import_gpx.js",
-    "guide": "node scripts/guide.js"
+    "guide": "node scripts/guide.js",
+    "share:route": "node scripts/share_route.js",
+    "import:bundle": "node scripts/import_bundle.js"
   }
 }

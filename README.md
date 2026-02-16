@@ -44,6 +44,14 @@ See: `docs/apple-watch.md`
 6. Import a GPX: `npm run import:gpx -- /path/to/route.gpx` (also writes artifacts)
 7. Guide locally (by routeId + location):
    - `npm run guide -- <routeId> <lat> <lon> [lastIdx] --wx on --mode day_hike`
+
+## Share routes (agent-to-agent)
+Create a portable share bundle:
+- `npm run share:route -- <routeId> [--alerts /path/to/alerts.json]`
+
+Import a bundle received from someone else:
+- `npm run import:bundle -- /path/to/outsideclaw-route-<routeId>-*.tar.gz`
+
 8. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
 
 ## License
