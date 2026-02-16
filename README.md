@@ -39,7 +39,9 @@ See: `docs/apple-watch.md`
 1. Install OpenClaw (follow OpenClaw docs)
 2. Configure Telegram channel for your OpenClaw instance
 3. Install the skill(s) in `skills/`
-4. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
+4. Initialize DB: `npm run db:init`
+5. Import a KML: `npm run import:kml -- /path/to/route.kml`
+6. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
 
 ## License
 MIT
