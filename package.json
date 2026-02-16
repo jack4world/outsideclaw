@@ -18,6 +18,7 @@
     "session:status": "node scripts/session_status.js",
     "session:stop": "node scripts/session_stop.js",
     "record:point": "node scripts/record_point.js",
-    "session:step": "node scripts/session_step.js"
+    "session:step": "node scripts/session_step.js",
+    "recommend": "node scripts/recommend.js"
   }
 }
