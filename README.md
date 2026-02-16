@@ -13,6 +13,7 @@
 - **偏航纠正**（低 token）：方向 + 距离 + 建议前进距离（确定性计算，不靠 LLM）
 - **关键节点提醒**：最陡段/山脊高点/下撤开始/终点等风险点提醒（`ALERT`）
 - **天气剧变预警**：风/阵风/能见度/降雨/降温突变（`WX ALERT`，Open‑Meteo，无 key）
+- **路线推荐（多选一）**：对多条已导入路线做确定性评分，输出主线路 + 备选（`npm run recommend`）
 - **路线分享**：可移植 bundle（`.tar.gz`）在 outsideclaw agent 之间互相导入
 - **本地数据库**（SQLite）：session + 轨迹点采集 + 风险事件记录（本地优先）
 
@@ -36,6 +37,17 @@ bash scripts/openclaw_oneclick_setup.sh --config /path/to/openclaw.config.json -
 - 初始化本地 DB 与 routes 目录
 - patch OpenClaw 配置（自动生成 `.bak` 备份）
 - （可选）重启 OpenClaw gateway
+
+## 常用命令（开发者/自部署）
+```bash
+cd ~/.outsideclaw/app/outsideclaw
+
+# 路线推荐（多条选一条 + 备选）
+npm run recommend -- --routes r1_a,r1_b --mode day_hike --time 6 --water 2.0
+
+# 偏航/指路（低 token 输出）
+npm run guide -- <routeId> <lat> <lon> --wx on --mode day_hike
+```
 
 ## License
 MIT
