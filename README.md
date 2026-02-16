@@ -41,7 +41,8 @@ See: `docs/apple-watch.md`
 3. Install the skill(s) in `skills/`
 4. Initialize DB: `npm run db:init`
 5. Import a KML: `npm run import:kml -- /path/to/route.kml`
-6. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
+6. Import a GPX: `npm run import:gpx -- /path/to/route.gpx`
+7. In Telegram: send GPX/KML → `/use <routeId>` → send location → `/g`
 
 ## License
 MIT

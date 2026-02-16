@@ -8,6 +8,7 @@
   "scripts": {
     "db:init": "node scripts/db_init.js",
     "db:info": "node scripts/db_info.js",
-    "import:kml": "node scripts/import_kml.js"
+    "import:kml": "node scripts/import_kml.js",
+    "import:gpx": "node scripts/import_gpx.js"
   }
 }
