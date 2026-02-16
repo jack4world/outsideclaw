@@ -6,6 +6,7 @@
   "description": "An outdoor personal assistant built on top of OpenClaw.",
   "license": "MIT",
   "scripts": {
+    "setup": "node scripts/setup.js",
     "db:init": "node scripts/db_init.js",
     "db:info": "node scripts/db_info.js",
     "import:kml": "node scripts/import_kml.js",
