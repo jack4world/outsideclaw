@@ -1,0 +1,12 @@
+{
+  "name": "outsideclaw",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "An outdoor personal assistant built on top of OpenClaw.",
+  "license": "MIT",
+  "scripts": {
+    "db:init": "node scripts/db_init.js",
+    "db:info": "node scripts/db_info.js"
+  }
+}
