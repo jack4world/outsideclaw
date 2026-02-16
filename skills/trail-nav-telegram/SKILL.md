@@ -43,6 +43,7 @@ Preferred alternative (often simplest): ask the user to export/send the **GPX/KM
   - `scripts/scrape_2bulu_tracks.js` list-page scraper → JSON/CSV + screenshot
   - `scripts/parse_2bulu_kml.js` parse KML → stats + geojson + routepack
   - `scripts/render_route_map.js` render route HTML+PNG map for sharing
+  - `scripts/guide_route.js` deterministic off-route guidance from GeoJSON + current location (outputs the 2-line guide protocol)
 - References:
   - `references/2bulu-notes.md`
   - `references/guide-protocol.md`

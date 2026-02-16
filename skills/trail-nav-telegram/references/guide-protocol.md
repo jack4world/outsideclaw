@@ -31,6 +31,9 @@ Line 2 (Chinese template, deterministic):
 - lookaheadM=120
 - bboxGuardM=2000 (if far from bbox, return E:OUT_OF_BBOX)
 
+## Reference implementation
+- `scripts/guide_route.js`: given a GeoJSON LineString + (lat,lon) (+ optional lastIdx), prints the 2-line response.
+
 ## Errors (single line)
 - `E:NO_ROUTE`
 - `E:OUT_OF_BBOX`
