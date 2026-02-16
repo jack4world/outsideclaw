@@ -49,3 +49,5 @@ Preferred alternative (often simplest): ask the user to export/send the **GPX/KM
   - `references/guide-protocol.md`
   - `references/safety-checklist.md`
   - `references/gear-list-overnight.md`
+  - `references/qiniangshan_alerts.json` risk-based key-node alerts
+  - `references/route-alerts.md` alerts schema + how to apply to any route
