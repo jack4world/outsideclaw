@@ -35,6 +35,34 @@ See: `docs/apple-watch.md`
 - `docs/` deployment + usage docs
 - `openclaw/` sample configs
 
+## Deploy / run
+
+### 1) Local (CLI only)
+```bash
+git clone https://github.com/jack4world/outsideclaw.git
+cd outsideclaw
+npm run setup
+# import routes
+npm run import:kml -- /path/to/route.kml
+npm run import:gpx -- /path/to/route.gpx
+# guide
+npm run guide -- <routeId> <lat> <lon> [lastIdx] --wx on --mode day_hike
+```
+
+### 2) Telegram (via OpenClaw)
+outsideclaw uses OpenClaw as the message gateway / agent runtime.
+
+High-level steps:
+1. Install and run OpenClaw gateway on your machine/server.
+2. Configure the Telegram channel for your OpenClaw instance (bot token, etc.).
+3. Point OpenClaw to use the skill in this repo:
+   - Example: `openclaw/config.example.json`
+4. In Telegram, send routes (GPX/KML) and locations; the agent responds with low-token guidance.
+
+Notes:
+- We do **not** bypass external site logins/captchas.
+- Data is local-first: DB defaults to `~/.outsideclaw/outsideclaw.sqlite`.
+
 ## Quick start
 See: `docs/quickstart.md`
 
@@ -44,6 +72,8 @@ Short-term (next 1–2 weeks):
 - **Track logging via Telegram**: when session recording is on, location messages append to `track_points`.
 - **Risk engine**: write more `risk_events` (time cutoff, low-water heuristic, repeated off-route) and expose simple summaries.
 - **Route recommendation v2**: include weather sharp-change signals (WX) and time constraints (startAt/cutoff) into deterministic scoring.
+- **Deployment docs**: improve “how to deploy outsideclaw” (local + OpenClaw+Telegram).
+- **Official website**: publish a GitHub Pages site from `docs/` for promotion.
 
 Mid-term:
 - **Track export**: export a session track to GeoJSON/GPX for backup and sharing.
