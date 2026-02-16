@@ -1,0 +1,9 @@
+{
+  "notes": "Example only. Fill in Telegram credentials in your OpenClaw gateway config.",
+  "skills": [
+    {
+      "name": "trail-nav-telegram",
+      "path": "./skills/trail-nav-telegram"
+    }
+  ]
+}
