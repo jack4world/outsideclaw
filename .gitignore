@@ -1,0 +1,11 @@
+# outsideclaw
+
+# Local data
+.outsideclaw/
+
+# Skill-generated outputs (do not commit)
+skills/**/out/
+
+# Temp
+/tmp/
+tmp/
