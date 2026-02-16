@@ -37,37 +37,29 @@ See: `docs/apple-watch.md`
 
 ## Deploy / run
 
-### 1) Local (CLI only)
+### 1) Hikers: use the service
+- See: `docs/for-hikers.md`
+
+### 2) Developers: self-host
+
+#### Local (CLI only)
 ```bash
 git clone https://github.com/jack4world/outsideclaw.git
 cd outsideclaw
 npm run setup
-# import routes
 npm run import:kml -- /path/to/route.kml
-npm run import:gpx -- /path/to/route.gpx
-# guide
-npm run guide -- <routeId> <lat> <lon> [lastIdx] --wx on --mode day_hike
+npm run guide -- <routeId> <lat> <lon> --wx on --mode day_hike
 ```
 
-### 2) Telegram (via OpenClaw)
+#### Telegram (via OpenClaw)
 outsideclaw uses OpenClaw as the message gateway / agent runtime.
 
-High-level steps:
-1. Install and run OpenClaw gateway on your machine/server.
-2. Configure the Telegram channel for your OpenClaw instance (bot token, etc.).
-3. Point OpenClaw to use the skill in this repo:
-   - Example: `openclaw/config.example.json`
-4. In Telegram, send routes (GPX/KML) and locations; the agent responds with low-token guidance.
+- One-click integration: `docs/openclaw-integration.md`
+- Quickstart: `docs/quickstart.md`
 
 Notes:
 - We do **not** bypass external site logins/captchas.
 - Data is local-first: DB defaults to `~/.outsideclaw/outsideclaw.sqlite`.
-
-## Quick start
-See: `docs/quickstart.md`
-
-## OpenClaw integration
-See: `docs/openclaw-integration.md` (one-click patch + restart)
 
 ## Next steps / roadmap
 Short-term (next 1–2 weeks):
